@@ -30,7 +30,7 @@ get_python_version()
 get_version()
 {
   local pkg=$1
-  cat /tmp/ha_requirements.txt | grep -i -m 1 "${pkg}[>=]=" | sed 's/.*==\(.*\)/\1/g'
+  cat /yuripe/tmp/ha_requirements.txt | grep -i -m 1 "${pkg}[>=]=" | sed 's/.*==\(.*\)/\1/g'
 }
 
 version()
@@ -44,11 +44,11 @@ is_lumi_gateway()
   ls -1 /dev/ttymxc1 2>/dev/null || echo ''
 }
 
-wget -q https://raw.githubusercontent.com/home-assistant/core/${HOMEASSISTANT_VERSION}/homeassistant/package_constraints.txt -O - > /tmp/ha_requirements.txt
-wget -q https://raw.githubusercontent.com/home-assistant/core/${HOMEASSISTANT_VERSION}/requirements.txt -O - >> /tmp/ha_requirements.txt
-wget -q https://raw.githubusercontent.com/home-assistant/core/${HOMEASSISTANT_VERSION}/requirements_all.txt -O - >> /tmp/ha_requirements.txt
+wget -q https://raw.githubusercontent.com/home-assistant/core/${HOMEASSISTANT_VERSION}/homeassistant/package_constraints.txt -O - > /yuripe/tmp/ha_requirements.txt
+wget -q https://raw.githubusercontent.com/home-assistant/core/${HOMEASSISTANT_VERSION}/requirements.txt -O - >> /yuripe/tmp/ha_requirements.txt
+wget -q https://raw.githubusercontent.com/home-assistant/core/${HOMEASSISTANT_VERSION}/requirements_all.txt -O - >> /yuripe/tmp/ha_requirements.txt
 # now we can fetch nabucasa version and its deps
-wget -q https://raw.githubusercontent.com/NabuCasa/hass-nabucasa/$(get_version hass-nabucasa)/setup.py -O - | grep '[>=]=' | sed -E 's/\s*"(.*)",?/\1/' >> /tmp/ha_requirements.txt
+wget -q https://raw.githubusercontent.com/NabuCasa/hass-nabucasa/$(get_version hass-nabucasa)/setup.py -O - | grep '[>=]=' | sed -E 's/\s*"(.*)",?/\1/' >> /yuripe/tmp/ha_requirements.txt
 
 PYCOGNITO_VER=2021.03.1  # zero is required, incorrect version in github
 HOMEASSISTANT_FRONTEND_VERSION=$(get_version home-assistant-frontend)
@@ -139,7 +139,7 @@ opkg install \
 # openwrt master doesn't have this package
 opkg install python3-gdbm || true
 
-cd /tmp/
+cd /yuripe/tmp/
 
 # add missing _distutils_hack from setuptools
 mkdir -p /usr/lib/python${PYTHON_VERSION}/site-packages/_distutils_hack
@@ -148,7 +148,7 @@ wget https://raw.githubusercontent.com/pypa/setuptools/v56.0.0/_distutils_hack/o
 
 echo "Install base requirements from PyPI..."
 pip3 install wheel
-cat << EOF > /tmp/requirements.txt
+cat << EOF > /yuripe/tmp/requirements.txt
 tzdata==2021.2.post0  # 2021.6+ requirement
 
 $(version atomicwrites)  # nabucasa dep
@@ -178,7 +178,7 @@ hass-configurator==0.4.1
 EOF
 
 if [ $LUMI_GATEWAY ]; then
-  cat << EOF >> /tmp/requirements.txt
+  cat << EOF >> /yuripe/tmp/requirements.txt
 # zha requirements
 $(version pyserial)
 $(version zha-quirks)
@@ -187,7 +187,7 @@ https://github.com/zigpy/zigpy-zigate/archive/8772221faa7dfbcd31a3bba6e548c356af
 EOF
 fi
 
-pip3 install -r /tmp/requirements.txt
+pip3 install -r /yuripe/tmp/requirements.txt
 
 if [ $LUMI_GATEWAY ]; then
   # show internal serial ports for Xiaomi Gateway
@@ -277,7 +277,7 @@ cd ..
 rm -rf home-assistant-frontend.tar.gz home-assistant-frontend-${HOMEASSISTANT_FRONTEND_VERSION}
 
 echo "Install HASS"
-cd /tmp
+cd /yuripe/tmp
 rm -rf homeassistant.tar.gz homeassistant-${HOMEASSISTANT_VERSION}
 wget https://pypi.python.org/packages/source/h/homeassistant/homeassistant-${HOMEASSISTANT_VERSION}.tar.gz -O homeassistant.tar.gz
 tar -zxf homeassistant.tar.gz
@@ -471,9 +471,9 @@ sed -i 's/defusedxml==[0-9\.]*//' homeassistant/package_constraints.txt
 if [ "${OPENWRT_VERSION}" == "19.07" ]; then
   # downgrade using python 3.8 to be compatible with 3.7
   sed -i 's/REQUIRED_PYTHON_VER = \(3, [0-9], [0-9]\)/REQUIRED_PYTHON_VER = \(3, 7, 0\)/' homeassistant/const.py
-  wget https://raw.githubusercontent.com/openlumi/homeassistant_on_openwrt/downgrade_python/ha_py37.patch -O /tmp/ha_py37.patch
-  patch -p1 < /tmp/ha_py37.patch
-  rm -rf /tmp/ha_py37.patch
+  wget https://raw.githubusercontent.com/openlumi/homeassistant_on_openwrt/downgrade_python/ha_py37.patch -O /yuripe/tmp/ha_py37.patch
+  patch -p1 < /yuripe/tmp/ha_py37.patch
+  rm -rf /yuripe/tmp/ha_py37.patch
 fi
 
 find . -type f -exec touch {} +
